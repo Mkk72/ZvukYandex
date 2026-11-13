@@ -1,0 +1,409 @@
+/*
+ * Палитра Яндекс Музыки: чёрное поле, жёлтый луч и фиолетово-малиновый край.
+ * Градиент взят с обложки «Моей волны»: #FFDB4D → #FF2E88 → #A100FF.
+ */
+:root {
+  --bg: #000000;
+  --panel: #0b0b0e;
+  --panel-2: #141418;
+  --line: #26262d;
+  --text: #ffffff;
+  --muted: #8d8d97;
+  --dim: #5d5d66;
+  --yellow: #ffdb4d;
+  --yellow-hot: #ffea80;
+  --pink: #ff2e88;
+  --violet: #a100ff;
+  --wave: linear-gradient(90deg, #ffdb4d 0%, #ffb020 28%, #ff2e88 64%, #a100ff 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font: 12px/1.1 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  user-select: none;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.bar {
+  position: relative;
+  flex: 0 0 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px 13px;
+  background:
+    radial-gradient(130% 220% at 10% 150%, rgba(255, 219, 77, 0.12), transparent 55%),
+    radial-gradient(110% 200% at 96% -60%, rgba(161, 0, 255, 0.26), transparent 62%),
+    #050506;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  -webkit-app-region: drag;
+}
+
+/* Меню открывается вверх: окно временно становится выше, полоса остаётся внизу. */
+.menu {
+  flex: 0 0 auto;
+  background: rgba(10, 10, 13, 0.98);
+  border-top: 1px solid var(--line);
+  padding: 4px 0;
+  overflow: hidden;
+  -webkit-app-region: no-drag;
+}
+
+.menu[hidden] {
+  display: none;
+}
+
+.menu-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-item {
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #dedee4;
+  cursor: default;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.menu-item:hover {
+  background: linear-gradient(90deg, rgba(255, 219, 77, 0.12), rgba(161, 0, 255, 0.16));
+}
+
+.menu-item.disabled {
+  color: var(--dim);
+  pointer-events: none;
+}
+
+.menu-item .check {
+  width: 12px;
+  color: var(--yellow);
+}
+
+.menu-item .value {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+.menu-sep {
+  height: 1px;
+  background: var(--line);
+  margin: 4px 0;
+}
+
+.cover {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  background:
+    radial-gradient(circle at 34% 30%, rgba(255, 219, 77, 0.85), transparent 52%),
+    radial-gradient(circle at 72% 72%, rgba(161, 0, 255, 0.9), transparent 60%),
+    #17171c;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: none;
+}
+
+.cover.has-art img {
+  display: block;
+}
+
+.meta {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.title,
+.artist {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.artist {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  -webkit-app-region: no-drag;
+}
+
+.btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #c9c9d1;
+  width: 24px;
+  height: 24px;
+  line-height: 1;
+  border-radius: 5px;
+  font-size: 13px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 120ms ease, color 120ms ease, transform 120ms ease;
+}
+
+.btn:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+}
+
+.btn:active {
+  background: rgba(255, 255, 255, 0.12);
+  transform: scale(0.94);
+}
+
+/* Кнопка play — как большая жёлтая кнопка на обложке «Моей волны». */
+.btn.play {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: #050505;
+  background: var(--yellow);
+  font-size: 10px;
+  padding-left: 1px;
+  box-shadow:
+    0 0 0 1px rgba(255, 219, 77, 0.35),
+    0 0 14px rgba(255, 219, 77, 0.24);
+}
+
+.btn.play:hover {
+  background: var(--yellow-hot);
+  color: #000;
+  box-shadow:
+    0 0 0 1px rgba(255, 234, 128, 0.6),
+    0 0 18px rgba(255, 219, 77, 0.4);
+  transform: scale(1.05);
+}
+
+.btn.like.active {
+  color: var(--pink);
+  text-shadow: 0 0 12px rgba(255, 46, 136, 0.65);
+}
+
+.btn.menu-btn {
+  margin-left: 2px;
+  color: var(--muted);
+}
+
+.btn.menu-btn:hover {
+  color: #fff;
+}
+
+.btn.close {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.btn.close:hover {
+  color: #fff;
+  background: #b33563;
+}
+
+.btn.menu-btn.active {
+  color: var(--yellow);
+}
+
+.btn:disabled {
+  opacity: 0.28;
+  cursor: default;
+  transform: none;
+}
+
+.time {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  -webkit-app-region: no-drag;
+}
+
+.slash {
+  margin: 0 2px;
+  opacity: 0.45;
+}
+
+.secondary {
+  display: none;
+}
+
+.progress {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 5px;
+  height: 6px;
+  padding: 0;
+  border-radius: 3px;
+  overflow: hidden;
+  background: #1d1d22;
+  -webkit-app-region: no-drag;
+  cursor: pointer;
+}
+
+.progress:hover .fill {
+  box-shadow: 0 0 10px rgba(255, 46, 136, 0.65);
+}
+
+.progress .fill {
+  height: 100%;
+  width: 0;
+  background: var(--wave);
+  border-radius: 3px;
+  transition: width 0.2s linear;
+}
+
+.extras {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  -webkit-app-region: no-drag;
+}
+
+.volume {
+  width: 50px;
+  height: 14px;
+  accent-color: var(--yellow);
+  cursor: pointer;
+}
+
+.btn.quality {
+  width: auto;
+  padding: 0 5px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #777780;
+  border: 1px solid #303037;
+  border-radius: 4px;
+}
+
+.btn.quality.active {
+  color: #050505;
+  background: var(--yellow);
+  border-color: var(--yellow);
+}
+
+body.wide .volume {
+  width: 86px;
+}
+
+/* Широкая плашка ~420×110: две строки. */
+body.wide .bar {
+  flex-basis: 110px;
+  height: 110px;
+  flex-wrap: wrap;
+  align-content: center;
+  padding: 3px 10px 11px;
+  gap: 3px 8px;
+  background:
+    radial-gradient(120% 260% at 6% 130%, rgba(255, 219, 77, 0.16), transparent 55%),
+    radial-gradient(100% 230% at 98% -50%, rgba(161, 0, 255, 0.34), transparent 62%),
+    #050506;
+}
+
+body.wide .cover {
+  width: 42px;
+  height: 42px;
+  border-radius: 7px;
+}
+
+body.wide .title {
+  font-size: 13px;
+}
+
+body.wide .artist {
+  font-size: 11px;
+}
+
+body.wide .secondary {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  -webkit-app-region: no-drag;
+}
+
+body.wide .btn.small {
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
+}
+
+body.wide .btn.wave {
+  color: var(--yellow);
+}
+
+body.wide .hint {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: var(--dim);
+  letter-spacing: 0.01em;
+}
+
+.brand-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--wave);
+  box-shadow: 0 0 8px rgba(255, 46, 136, 0.55);
+}
+
+body.wide .progress {
+  left: 10px;
+  right: 10px;
+  bottom: 5px;
+  height: 9px;
+  border-radius: 5px;
+  background: #1c1c21;
+}
+
+body.wide .progress .fill {
+  height: 100%;
+  border-radius: 5px;
+}

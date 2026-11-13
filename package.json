@@ -1,0 +1,48 @@
+{
+  "name": "zvuk-yandex",
+  "productName": "ZvukYandex",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Настольный плеер Яндекс Музыки (music.yandex.ru) с мини-плеером и треем",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "npm run build && electron . --no-sandbox",
+    "start:sandboxed": "npm run build && electron .",
+    "test": "vitest run",
+    "dist": "npm run build && electron-builder --win",
+    "dist:dir": "npm run build && electron-builder --win dir"
+  },
+  "build": {
+    "appId": "ru.zvukyandex.desktop",
+    "productName": "ZvukYandex",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "app/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "app/icon-256.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "ZvukYandex",
+      "include": "installer.nsh"
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "electron": "^45.3.1",
+    "electron-builder": "^26.18.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  }
+}

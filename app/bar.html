@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https: data:; style-src 'self'" />
+    <title>ZvukYandex</title>
+    <link rel="stylesheet" href="bar.css" />
+  </head>
+  <body>
+    <div class="menu" id="menu" hidden>
+      <div class="menu-list" id="menu-list"></div>
+    </div>
+
+    <div class="bar" id="bar">
+      <div class="cover" id="cover"><img id="cover-img" alt="" /></div>
+
+      <div class="meta">
+        <div class="title" id="title" title="">Яндекс Музыка</div>
+        <div class="artist" id="artist">ничего не играет</div>
+      </div>
+
+      <div class="controls">
+        <button class="btn" data-cmd="dislike" title="Не нравится" aria-label="Не нравится">&#8856;</button>
+        <button class="btn" data-cmd="prev" title="Предыдущая песня (Ctrl+Alt+←)" aria-label="Предыдущая песня">&#9198;</button>
+        <button class="btn play" data-cmd="toggle" id="toggle" title="Воспроизвести" aria-label="Воспроизвести">&#9205;</button>
+        <button class="btn" data-cmd="next" title="Следующая песня (Ctrl+Alt+→)" aria-label="Следующая песня">&#9197;</button>
+        <button class="btn like" data-cmd="like" title="Нравится (Ctrl+Alt+L)" aria-label="Нравится">&#9825;</button>
+        <button class="btn menu-btn" data-menu="1" title="Меню" aria-label="Меню">&#9776;</button>
+        <button class="btn close" data-cmd="quit" title="Закрыть ZvukYandex" aria-label="Закрыть">&#10005;</button>
+      </div>
+
+      <div class="time"><span id="pos">0:00</span><span class="slash">/</span><span id="dur">0:00</span></div>
+
+      <div class="extras">
+        <input class="volume" id="volume" type="range" min="0" max="100" step="1" value="100" title="Громкость" aria-label="Громкость" />
+        <button class="btn quality" id="quality" data-cmd="quality" title="Настройки звука" aria-label="Настройки звука">HQ</button>
+      </div>
+
+      <div class="secondary">
+        <button class="btn small wave" data-cmd="wave" title="Моя волна" aria-label="Моя волна">&#8776;</button>
+        <button class="btn small" data-cmd="repeat" title="Повтор (меню сайта)" aria-label="Повтор">&#8635;</button>
+        <button class="btn small" data-cmd="queue" title="Очередь воспроизведения" aria-label="Очередь">&#9776;</button>
+        <span class="hint"><span class="brand-dot"></span>Яндекс Музыка</span>
+      </div>
+
+      <div class="progress" id="progress" title="Перемотка"><div class="fill" id="fill"></div></div>
+    </div>
+
+    <script src="bar.js"></script>
+  </body>
+</html>

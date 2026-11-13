@@ -1,0 +1,14 @@
+node_modules/
+dist/
+release/
+_spike/
+_diag/
+_profile/
+spike/
+ref-wave.png
+_run.log
+build.log
+test.log
+*.log
+Thumbs.db
+desktop.ini
