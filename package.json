@@ -4,6 +4,8 @@
   "version": "0.1.0",
   "private": true,
   "description": "Настольный плеер Яндекс Музыки (music.yandex.ru) с мини-плеером и треем",
+  "author": "Mamberger Konstantin",
+  "license": "MIT",
   "main": "dist/main/index.js",
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -23,6 +25,20 @@
       "dist/**/*",
       "app/**/*",
       "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "LICENSE",
+        "to": "LICENSE.txt"
+      },
+      {
+        "from": "LICENSE.ru.md",
+        "to": "LICENSE.ru.md"
+      },
+      {
+        "from": "CREDITS.md",
+        "to": "CREDITS.md"
+      }
     ],
     "win": {
       "target": [

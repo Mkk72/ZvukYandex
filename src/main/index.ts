@@ -27,6 +27,10 @@ const SITE_URL = 'https://music.yandex.ru/';
 const BAR_HEIGHT = 44;
 const WIDE_HEIGHT = 110;
 
+function licenseFile(): string {
+  return app.isPackaged ? path.join(process.resourcesPath, 'LICENSE.txt') : path.join(APP_DIR, 'LICENSE');
+}
+
 // Диагностический лог: файл, потому что stdout GUI-процесса на Windows теряется.
 const DIAG_LOG = path.join(DIAG_DIR, 'boot2.log');
 function b(message: string): void {
@@ -241,6 +245,10 @@ function closeBarMenu(): void {
 }
 
 async function onMenuItem(id: string): Promise<void> {
+  if (id === 'license') {
+    await shell.openPath(licenseFile());
+    return;
+  }
   if (id === 'settings') {
     await shell.openPath(settingsFile());
     return;

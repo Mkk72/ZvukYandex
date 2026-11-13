@@ -81,6 +81,7 @@ export function buildTrayMenu(state: PlayerState, options: TrayMenuOptions): Men
     checked: !!options.startFlowOnLaunch
   });
   items.push({ id: 'sep-4', label: '', enabled: false, type: 'separator' });
+  items.push({ id: 'license', label: 'Лицензия…', enabled: true, type: 'normal' });
   add('quit', 'Выход');
   return items;
 }
