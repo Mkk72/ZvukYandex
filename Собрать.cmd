@@ -1,12 +1,12 @@
 @echo off
-rem ZvukYandex: сборка после правок в коде. Запуск — Запустить.cmd
+rem ZvukYandex: rebuild after code changes. Launch with ?????????.cmd
 setlocal
 cd /d "%~dp0"
 
 if not exist "%~dp0package.json" (
   echo.
-  echo   Запустите "Собрать.cmd" из корня проекта — там, где лежит package.json.
-  echo   Текущая папка: %~dp0
+  echo   Run this file from the project root where package.json is located.
+  echo   Current folder: %~dp0
   echo.
   pause
   exit /b 1
@@ -15,18 +15,17 @@ if not exist "%~dp0package.json" (
 where node >nul 2>nul
 if errorlevel 1 (
   echo.
-  echo   Нужен Node.js LTS — его нет в PATH.
-  echo   Скачать: https://nodejs.org/en/download
+  echo   Node.js LTS is required: https://nodejs.org/en/download
   echo.
   pause
   exit /b 1
 )
 
 if not exist "%~dp0node_modules" (
-  echo   Ставлю зависимости...
+  echo   Installing dependencies...
   call npm install
   if errorlevel 1 (
-    echo   npm install не удался.
+    echo   npm install failed.
     pause
     exit /b 1
   )
@@ -35,13 +34,13 @@ if not exist "%~dp0node_modules" (
 call npm run build
 if errorlevel 1 (
   echo.
-  echo   Сборка не удалась — смотрите ошибки выше.
+  echo   Build failed - see the errors above.
   echo.
   pause
   exit /b 1
 )
 
 echo.
-echo   Готово: dist\main\index.js обновлён. Запуск — Запустить.cmd
+echo   Done: dist\main\index.js updated. Launch with ?????????.cmd
 echo.
 timeout /t 3 >nul

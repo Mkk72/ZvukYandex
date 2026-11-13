@@ -10,15 +10,20 @@ import { PlayerPresenter, type BarLayout, type IShellActions } from './presenter
 import { loadSettings, saveSettings, settingsFile, type Settings } from './settings';
 
 const APP_DIR = path.resolve(__dirname, '..', '..');
+// Профиль Chromium — в LocalAppData: Roaming на этой машине иногда отдаёт
+// «Access denied» на SingletonLock, из-за чего приложение молча не стартует.
 const DATA_DIR = process.env.ZVUKYANDEX_USER_DATA
   ? path.resolve(process.env.ZVUKYANDEX_USER_DATA)
-  : path.join(process.env.APPDATA || process.cwd(), 'ZvukYandex');
+  : path.join(process.env.LOCALAPPDATA || process.env.APPDATA || process.cwd(), 'ZvukYandex');
+// Портативный режим и тесты: можно увести профиль в свою папку.
+app.setPath('userData', DATA_DIR);
+try {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+} catch {
+  /* если папку создать не удалось, ниже будет понятная ошибка запуска */
+}
 // В установленной сборке app.asar только для чтения: диагностика идёт в профиль.
 const DIAG_DIR = app.isPackaged ? path.join(DATA_DIR, 'diag') : path.join(APP_DIR, '_diag');
-// Портативный режим и тесты: можно увести профиль в свою папку, не трогая %APPDATA%.
-if (process.env.ZVUKYANDEX_USER_DATA) {
-  app.setPath('userData', path.resolve(process.env.ZVUKYANDEX_USER_DATA));
-}
 const BAR_FILE = path.join(APP_DIR, 'app', 'bar.html');
 const PRELOAD_FILE = path.join(__dirname, '..', 'preload', 'bar.js');
 const TRAY_ICON = path.join(APP_DIR, 'app', 'tray-32.png');
@@ -553,11 +558,18 @@ async function bootstrap(): Promise<void> {
 }
 
 b('requesting single instance lock');
-const gotLock = app.requestSingleInstanceLock();
+let gotLock = false;
+try {
+  gotLock = app.requestSingleInstanceLock();
+} catch (e) {
+  b('single instance lock error: ' + String(e));
+}
 b('lock=' + gotLock);
 if (!gotLock) {
-  b('no lock, quitting');
-  app.quit();
+  // На этой машине Chromium иногда не может создать SingletonLock в AppData
+  // (Access denied) даже без второго экземпляра. Без блокировки приложение
+  // обязано запуститься: единственный минус — можно открыть две копии.
+  b('lock unavailable, starting without single-instance guard');
 } else {
   app.on('second-instance', () => {
     if (siteWin) {
@@ -565,28 +577,28 @@ if (!gotLock) {
       siteWin.focus();
     }
   });
-
-  app
-    .whenReady()
-    .then(() => {
-      b('whenReady resolved');
-      return bootstrap();
-    })
-    .catch((e) => {
-      b('bootstrap failed: ' + String(e));
-      log('bootstrap failed: ' + String(e));
-    });
-
-  app.on('window-all-closed', () => {
-    if (quitting) app.quit();
-  });
-
-  app.on('will-quit', () => {
-    globalShortcut.unregisterAll();
-    presenter?.stop();
-  });
-
-  app.on('activate', () => {
-    if (siteWin) siteWin.show();
-  });
 }
+
+app
+  .whenReady()
+  .then(() => {
+    b('whenReady resolved');
+    return bootstrap();
+  })
+  .catch((e) => {
+    b('bootstrap failed: ' + String(e));
+    log('bootstrap failed: ' + String(e));
+  });
+
+app.on('window-all-closed', () => {
+  if (quitting) app.quit();
+});
+
+app.on('will-quit', () => {
+  globalShortcut.unregisterAll();
+  presenter?.stop();
+});
+
+app.on('activate', () => {
+  if (siteWin) siteWin.show();
+});

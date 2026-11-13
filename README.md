@@ -53,9 +53,9 @@ Electron не поднимается (падение до выполнения �
 ## Первый вход
 
 Первый запуск открывает сайт. Нажмите «Войти» и пройдите вход Яндекс ID как в браузере.
-Сессия лежит в `%APPDATA%\ZvukYandex\Partitions\yandex\Network\Cookies` и переживает
+Сессия лежит в `%LOCALAPPDATA%\ZvukYandex\Partitions\yandex\Network\Cookies` и переживает
 перезапуск и обновление сборки. Разлогиниться — там же: «Выйти» на сайте или удалить
-каталог `%APPDATA%\ZvukYandex`.
+каталог `%LOCALAPPDATA%\ZvukYandex`.
 
 Можно увести профиль в другую папку (портативный режим, тесты):
 
@@ -86,7 +86,7 @@ npm start
 
 ## Настройки
 
-`%APPDATA%\ZvukYandex\settings.json`:
+`%LOCALAPPDATA%\ZvukYandex\settings.json`:
 
 | Ключ | Смысл |
 |---|---|
@@ -118,7 +118,7 @@ npm start
 
 `_diag/state.json` обновляется раз в 10 секунд: URL, cookie, снимок `mediaSession`,
 `<audio>`, позиция, лайк, HQ и последний DOM-клик. В установленной сборке тот же
-файл лежит в `%APPDATA%\ZvukYandex\diag\`.
+файл лежит в `%LOCALAPPDATA%\ZvukYandex\diag\`.
 
 Команды без DevTools — файл `_diag/command.txt` (по одной строке):
 

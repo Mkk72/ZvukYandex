@@ -1,13 +1,12 @@
 @echo off
-rem ZvukYandex: запуск без установщика. Ничего не собирает — только запускает.
-rem Собрать после правок в коде: Собрать.cmd
+rem ZvukYandex: launch without installer. Builds only when dist is missing.
 setlocal
 cd /d "%~dp0"
 
 if not exist "%~dp0package.json" (
   echo.
-  echo   Запустите "Запустить.cmd" из корня проекта — там, где лежит package.json.
-  echo   Текущая папка: %~dp0
+  echo   Run this file from the project root where package.json is located.
+  echo   Current folder: %~dp0
   echo.
   pause
   exit /b 1
@@ -15,11 +14,11 @@ if not exist "%~dp0package.json" (
 
 if exist "%~dp0node_modules\electron\dist\electron.exe" (
   if not exist "%~dp0dist\main\index.js" (
-    echo   Первый запуск: собираю...
+    echo   First launch: building...
     call npm run build
     if errorlevel 1 (
       echo.
-      echo   Сборка не удалась. Подробности — в выводе выше.
+      echo   Build failed. See the output above.
       echo.
       pause
       exit /b 1
@@ -37,21 +36,16 @@ if exist "%~dp0release\win-unpacked\ZvukYandex.exe" (
 where node >nul 2>nul
 if errorlevel 1 (
   echo.
-  echo   Для первого запуска нужен Node.js LTS — его нет в PATH.
-  echo   Скачать: https://nodejs.org/en/download  ^(msi, установить с галочкой Add to PATH^)
-  echo   После установки снова запустите этот файл.
+  echo   Node.js LTS is required for the first launch: https://nodejs.org/en/download
   echo.
   pause
   exit /b 1
 )
 
-echo   Зависимостей нет, ставлю (это один раз)...
+echo   Dependencies are missing, installing...
 call npm install
 if errorlevel 1 (
-  echo.
-  echo   npm install не удался. Проверьте доступ в интернет и повторите.
-  echo   Node.js: https://nodejs.org/en/download
-  echo.
+  echo   npm install failed. Check the internet connection and try again.
   pause
   exit /b 1
 )

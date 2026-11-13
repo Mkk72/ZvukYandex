@@ -43,7 +43,7 @@ export function settingsFile(): string {
   if (process.env.ZVUKYANDEX_USER_DATA) {
     return path.join(path.resolve(process.env.ZVUKYANDEX_USER_DATA), 'settings.json');
   }
-  const base = process.env.APPDATA || process.env.HOME || process.cwd();
+  const base = process.env.LOCALAPPDATA || process.env.APPDATA || process.cwd();
   return path.join(base, 'ZvukYandex', 'settings.json');
 }
 
