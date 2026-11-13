@@ -118,7 +118,8 @@ npm start
 ## Диагностика
 
 `_diag/state.json` обновляется раз в 10 секунд: URL, cookie, снимок `mediaSession`,
-`<audio>`, позиция, лайк, HQ и последний DOM-клик.
+`<audio>`, позиция, лайк, HQ и последний DOM-клик. В установленной сборке тот же
+файл лежит в `%APPDATA%\ZvukYandex\diag\`.
 
 Команды без DevTools — файл `_diag/command.txt` (по одной строке):
 

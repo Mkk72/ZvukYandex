@@ -207,7 +207,12 @@ export class PlayerPresenter {
   async startFlow(title: string): Promise<void> {
     const before = this.state.track?.title ?? '';
     await this.shell.goHome();
-    const card = await this.bridge.clickFlowCard(title);
+    let card = await this.bridge.clickFlowCard(title);
+    if (!card.ok) {
+      // Ленте иногда нужно чуть больше времени после SPA-перехода.
+      await new Promise((resolve) => setTimeout(resolve, 900));
+      card = await this.bridge.clickFlowCard(title);
+    }
     if (!card.ok) {
       this.logger('flow: card not found ' + title);
       return;
@@ -241,8 +246,8 @@ export class PlayerPresenter {
     if (command === 'show') return this.shell.toggleWindow();
 
     if (!canRun(command, this.state)) {
-      // На most команды без трека бессмысленны, но play/pause при пустой плашке
-      // может понадобиться, чтобы запустить воспроизведение в самом сайте.
+      // Без трека бессмысленны почти все команды, но play/pause при пустой
+      // плашке может понадобиться, чтобы запустить воспроизведение в сайте.
       if (command !== 'toggle') return;
     }
 

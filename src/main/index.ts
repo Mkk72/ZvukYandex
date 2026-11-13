@@ -10,6 +10,11 @@ import { PlayerPresenter, type BarLayout, type IShellActions } from './presenter
 import { loadSettings, saveSettings, settingsFile, type Settings } from './settings';
 
 const APP_DIR = path.resolve(__dirname, '..', '..');
+const DATA_DIR = process.env.ZVUKYANDEX_USER_DATA
+  ? path.resolve(process.env.ZVUKYANDEX_USER_DATA)
+  : path.join(process.env.APPDATA || process.cwd(), 'ZvukYandex');
+// В установленной сборке app.asar только для чтения: диагностика идёт в профиль.
+const DIAG_DIR = app.isPackaged ? path.join(DATA_DIR, 'diag') : path.join(APP_DIR, '_diag');
 // Портативный режим и тесты: можно увести профиль в свою папку, не трогая %APPDATA%.
 if (process.env.ZVUKYANDEX_USER_DATA) {
   app.setPath('userData', path.resolve(process.env.ZVUKYANDEX_USER_DATA));
@@ -23,7 +28,7 @@ const BAR_HEIGHT = 44;
 const WIDE_HEIGHT = 110;
 
 // Диагностический лог: файл, потому что stdout GUI-процесса на Windows теряется.
-const DIAG_LOG = path.join(APP_DIR, '_diag', 'boot2.log');
+const DIAG_LOG = path.join(DIAG_DIR, 'boot2.log');
 function b(message: string): void {
   try {
     fs.mkdirSync(path.dirname(DIAG_LOG), { recursive: true });
@@ -465,8 +470,8 @@ async function bootstrap(): Promise<void> {
 
   // Диагностика и канал команд для отладки без DevTools:
   // пишем состояние в _diag/state.json, читаем команды из _diag/command.txt.
-  const diagFile = path.join(APP_DIR, '_diag', 'state.json');
-  const commandFile = path.join(APP_DIR, '_diag', 'command.txt');
+  const diagFile = path.join(DIAG_DIR, 'state.json');
+  const commandFile = path.join(DIAG_DIR, 'command.txt');
   const yandexSession = session.fromPartition('persist:yandex');
   setInterval(() => {
     void writeDiagnostics(diagFile, bridge, () => siteWin?.webContents.getURL() ?? '', yandexSession);
@@ -491,11 +496,11 @@ async function bootstrap(): Promise<void> {
           void siteWin?.webContents
             .executeJavaScript(code, true)
             .then((result: unknown) => {
-              fs.writeFileSync(path.join(APP_DIR, '_diag', 'eval.json'), JSON.stringify(result, null, 2), 'utf8');
+              fs.writeFileSync(path.join(DIAG_DIR, 'eval.json'), JSON.stringify(result, null, 2), 'utf8');
               b('eval ok');
             })
             .catch((e: unknown) => {
-              fs.writeFileSync(path.join(APP_DIR, '_diag', 'eval.json'), JSON.stringify({ error: String(e) }), 'utf8');
+              fs.writeFileSync(path.join(DIAG_DIR, 'eval.json'), JSON.stringify({ error: String(e) }), 'utf8');
               b('eval failed: ' + String(e));
             });
           continue;
@@ -509,8 +514,8 @@ async function bootstrap(): Promise<void> {
         if (command === 'shot') {
           b('command shot');
           void Promise.all([
-            barWin?.webContents.capturePage().then((img) => fs.writeFileSync(path.join(APP_DIR, '_diag', 'shot-bar.png'), img.toPNG())),
-            siteWin?.webContents.capturePage().then((img) => fs.writeFileSync(path.join(APP_DIR, '_diag', 'shot-site.png'), img.toPNG()))
+            barWin?.webContents.capturePage().then((img) => fs.writeFileSync(path.join(DIAG_DIR, 'shot-bar.png'), img.toPNG())),
+            siteWin?.webContents.capturePage().then((img) => fs.writeFileSync(path.join(DIAG_DIR, 'shot-site.png'), img.toPNG()))
           ]).catch((e: unknown) => b('shot failed: ' + String(e)));
           continue;
         }
