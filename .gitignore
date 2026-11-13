@@ -4,6 +4,7 @@ release/
 _spike/
 _diag/
 _profile/
+.session/
 spike/
 ref-wave.png
 _run.log

@@ -1,4 +1,5 @@
 import { app, BrowserWindow, Menu, Tray, globalShortcut, ipcMain, nativeImage, screen, session, shell } from 'electron';
+import type { Session } from 'electron';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { toBarViewModel } from '../core/barViewModel';
@@ -10,33 +11,13 @@ import { PlayerPresenter, type BarLayout, type IShellActions } from './presenter
 import { loadSettings, saveSettings, settingsFile, type Settings } from './settings';
 
 const APP_DIR = path.resolve(__dirname, '..', '..');
-// Профиль Chromium — в LocalAppData: Roaming на этой машине иногда отдаёт
-// «Access denied» на SingletonLock, из-за чего приложение молча не стартует.
+// Roaming на этой машине иногда отдаёт EPERM на SingletonLock, поэтому
+// профиль Chromium держим в LocalAppData.
 const DATA_DIR = process.env.ZVUKYANDEX_USER_DATA
   ? path.resolve(process.env.ZVUKYANDEX_USER_DATA)
   : path.join(process.env.LOCALAPPDATA || process.env.APPDATA || process.cwd(), 'ZvukYandex');
-// Портативный режим и тесты: можно увести профиль в свою папку.
-app.setPath('userData', DATA_DIR);
-try {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-} catch {
-  /* если папку создать не удалось, ниже будет понятная ошибка запуска */
-}
 // В установленной сборке app.asar только для чтения: диагностика идёт в профиль.
 const DIAG_DIR = app.isPackaged ? path.join(DATA_DIR, 'diag') : path.join(APP_DIR, '_diag');
-const BAR_FILE = path.join(APP_DIR, 'app', 'bar.html');
-const PRELOAD_FILE = path.join(__dirname, '..', 'preload', 'bar.js');
-const TRAY_ICON = path.join(APP_DIR, 'app', 'tray-32.png');
-const APP_ICON = path.join(APP_DIR, 'app', 'icon-256.png');
-const SITE_URL = 'https://music.yandex.ru/';
-const BAR_HEIGHT = 44;
-const WIDE_HEIGHT = 110;
-
-function licenseFile(): string {
-  return app.isPackaged ? path.join(process.resourcesPath, 'LICENSE.txt') : path.join(APP_DIR, 'LICENSE');
-}
-
-// Диагностический лог: файл, потому что stdout GUI-процесса на Windows теряется.
 const DIAG_LOG = path.join(DIAG_DIR, 'boot2.log');
 function b(message: string): void {
   try {
@@ -46,6 +27,97 @@ function b(message: string): void {
     /* ignore */
   }
 }
+app.setPath('userData', DATA_DIR);
+try {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+  b(`userData=${DATA_DIR} created=${fs.existsSync(DATA_DIR)}`);
+} catch (e) {
+  b(`userData=${DATA_DIR} mkdir failed: ${String(e)}`);
+}
+const BAR_FILE = path.join(APP_DIR, 'app', 'bar.html');
+const PRELOAD_FILE = path.join(__dirname, '..', 'preload', 'bar.js');
+const TRAY_ICON = path.join(APP_DIR, 'app', 'tray-32.png');
+const APP_ICON = path.join(APP_DIR, 'app', 'icon-256.png');
+const SITE_URL = 'https://music.yandex.ru/';
+const BAR_HEIGHT = 44;
+const WIDE_HEIGHT = 110;
+function resolveCookieBackupDir(): string {
+  for (const base of [process.env.LOCALAPPDATA, process.env.APPDATA]) {
+    if (!base) continue;
+    const dir = path.join(base, 'ZvukYandexSession');
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      if (fs.existsSync(dir)) return dir;
+    } catch {
+      /* следующий вариант */
+    }
+  }
+  // Запасной путь для портативного/тестового запуска, когда AppData недоступен.
+  return path.join(APP_DIR, '.session');
+}
+const COOKIE_BACKUP_DIR = resolveCookieBackupDir();
+const COOKIE_BACKUP = path.join(COOKIE_BACKUP_DIR, 'cookies.json');
+
+let yandexSession: Session | null = null;
+let quitFlushStarted = false;
+
+/**
+ * Яндекс выдаёт часть авторизационных cookie как сессионные. Chromium держит их
+ * только в памяти и теряет при закрытии окна — отсюда «после перезапуска опять
+ * просит вход». Сохраняем снимок cookie в профиль и восстанавливаем при старте,
+ * сессионным cookie даём год жизни.
+ */
+async function saveCookies(): Promise<void> {
+  if (!yandexSession) return;
+  try {
+    const cookies = await yandexSession.cookies.get({});
+    fs.mkdirSync(COOKIE_BACKUP_DIR, { recursive: true });
+    fs.writeFileSync(COOKIE_BACKUP, JSON.stringify(cookies, null, 1), 'utf8');
+    await yandexSession.cookies.flushStore();
+    b('cookies saved: ' + cookies.length);
+  } catch (e) {
+    b('cookies save failed: ' + String(e));
+  }
+}
+
+async function restoreCookies(): Promise<void> {
+  if (!yandexSession || !fs.existsSync(COOKIE_BACKUP)) return;
+  try {
+    const saved = JSON.parse(fs.readFileSync(COOKIE_BACKUP, 'utf8')) as Array<Record<string, unknown>>;
+    const now = Math.floor(Date.now() / 1000);
+    let restored = 0;
+    for (const c of saved) {
+      const domain = String(c.domain ?? '');
+      if (!domain || !c.name) continue;
+      const expiration = Number(c.expirationDate ?? 0);
+      if (expiration > 0 && expiration <= now) continue;
+      try {
+        await yandexSession.cookies.set({
+          url: `${c.secure ? 'https' : 'http'}://${domain.replace(/^\./, '')}${String(c.path || '/')}`,
+          name: String(c.name),
+          value: String(c.value ?? ''),
+          domain,
+          path: String(c.path || '/'),
+          secure: !!c.secure,
+          httpOnly: !!c.httpOnly,
+          expirationDate: expiration > now ? expiration : now + 365 * 24 * 3600,
+          sameSite: (c.sameSite as 'unspecified' | 'no_restriction' | 'lax' | 'strict') ?? 'lax'
+        });
+        restored++;
+      } catch {
+        /* отдельная cookie могла устареть — остальные важнее */
+      }
+    }
+    b('cookies restored: ' + restored);
+  } catch (e) {
+    b('cookies restore failed: ' + String(e));
+  }
+}
+
+function licenseFile(): string {
+  return app.isPackaged ? path.join(process.resourcesPath, 'LICENSE.txt') : path.join(APP_DIR, 'LICENSE');
+}
+
 process.on('uncaughtException', (e: Error) => b('uncaughtException: ' + (e?.stack || String(e))));
 process.on('unhandledRejection', (e: unknown) => b('unhandledRejection: ' + String(e)));
 b(`module loaded argv=${process.argv.slice(1).join(' ')}`);
@@ -389,9 +461,11 @@ async function bootstrap(): Promise<void> {
   // Сайт блокирует прокси (HTTP 418), поэтому по умолчанию идём напрямую.
   try {
     const ses = session.fromPartition('persist:yandex');
+    yandexSession = ses;
     await ses.setProxy(settings.proxyDirect ? { mode: 'direct' } : { mode: 'system' });
+    await restoreCookies();
   } catch (e) {
-    log('setProxy failed: ' + String(e));
+    log('setProxy/restoreCookies failed: ' + String(e));
   }
 
   siteWin = createSiteWindow();
@@ -473,6 +547,10 @@ async function bootstrap(): Promise<void> {
   presenter.start();
   b('presenter started');
 
+  // Периодически дублируем cookies: даже если приложение закроют принудительно,
+  // вход восстановится при следующем запуске.
+  setInterval(() => void saveCookies(), 15000);
+
   // Автозапуск «Моей волны»: главная уже загружена, поэтому просто ждём отрисовку карточек.
   if (settings.startFlowOnLaunch) {
     setTimeout(() => {
@@ -485,9 +563,9 @@ async function bootstrap(): Promise<void> {
   // пишем состояние в _diag/state.json, читаем команды из _diag/command.txt.
   const diagFile = path.join(DIAG_DIR, 'state.json');
   const commandFile = path.join(DIAG_DIR, 'command.txt');
-  const yandexSession = session.fromPartition('persist:yandex');
+  const diagSession = session.fromPartition('persist:yandex');
   setInterval(() => {
-    void writeDiagnostics(diagFile, bridge, () => siteWin?.webContents.getURL() ?? '', yandexSession);
+    void writeDiagnostics(diagFile, bridge, () => siteWin?.webContents.getURL() ?? '', diagSession);
   }, 10000);
   setInterval(() => {
     try {
@@ -567,8 +645,8 @@ try {
 b('lock=' + gotLock);
 if (!gotLock) {
   // На этой машине Chromium иногда не может создать SingletonLock в AppData
-  // (Access denied) даже без второго экземпляра. Без блокировки приложение
-  // обязано запуститься: единственный минус — можно открыть две копии.
+  // даже без второго экземпляра. Запускаемся без блокировки, иначе окно
+  // не появляется вовсе.
   b('lock unavailable, starting without single-instance guard');
 } else {
   app.on('second-instance', () => {
@@ -589,6 +667,13 @@ app
     b('bootstrap failed: ' + String(e));
     log('bootstrap failed: ' + String(e));
   });
+
+app.on('before-quit', (event) => {
+  if (quitFlushStarted) return;
+  quitFlushStarted = true;
+  event.preventDefault();
+  void saveCookies().finally(() => app.quit());
+});
 
 app.on('window-all-closed', () => {
   if (quitting) app.quit();

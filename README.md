@@ -55,14 +55,8 @@ Electron не поднимается (падение до выполнения �
 Первый запуск открывает сайт. Нажмите «Войти» и пройдите вход Яндекс ID как в браузере.
 Сессия лежит в `%LOCALAPPDATA%\ZvukYandex\Partitions\yandex\Network\Cookies` и переживает
 перезапуск и обновление сборки. Разлогиниться — там же: «Выйти» на сайте или удалить
-каталог `%LOCALAPPDATA%\ZvukYandex`.
+каталог `%LOCALAPPDATA%\ZvukYandex`. Сессионные cookies дополнительно сохраняются в `%LOCALAPPDATA%\ZvukYandexSession\cookies.json` — поэтому вход не теряется после закрытия.
 
-Можно увести профиль в другую папку (портативный режим, тесты):
-
-```powershell
-$env:ZVUKYANDEX_USER_DATA = 'D:\Portable\ZvukYandex'
-npm start
-```
 
 ## «Моя волна»
 
