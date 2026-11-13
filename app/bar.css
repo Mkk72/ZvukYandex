@@ -41,12 +41,12 @@ body {
 
 .bar {
   position: relative;
-  flex: 0 0 44px;
-  height: 44px;
+  flex: 0 0 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 8px 13px;
+  padding: 5px 8px 13px;
   background:
     radial-gradient(130% 220% at 10% 150%, rgba(255, 219, 77, 0.12), transparent 55%),
     radial-gradient(110% 200% at 96% -60%, rgba(161, 0, 255, 0.26), transparent 62%),
